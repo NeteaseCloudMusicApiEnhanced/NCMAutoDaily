@@ -1,13 +1,1 @@
-{
-  "name": "NCMAutoDaily",
-  "version": "0.1.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "AGPL-3.0-only",
-  "packageManager": "pnpm@10.28.1"
-}
+{"name":"NCMAutoDaily","version":"0.1.0","description":"网易云音乐自动打卡项目 - 自动完成每日签到、黑胶乐签、云贝签到和听歌打卡","main":"index.js","scripts":{"start":"node index.js","dev":"nodemon index.js"},"keywords":["netease","music","daily","sign","automation"],"author":"","license":"AGPL-3.0-only","packageManager":"pnpm@10.28.1","dependencies":{"@neteasecloudmusicapienhanced/api":"^4.28.0","dotenv":"^16.3.1","express":"^4.18.2"},"devDependencies":{"nodemon":"^3.1.14"}}

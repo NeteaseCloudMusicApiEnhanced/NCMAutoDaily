@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>二维码登录</title>
+  <title>获取 Cookie - 网易云音乐自动打卡</title>
   <style>
     * {
       margin: 0;
@@ -59,20 +59,6 @@
       display: block;
     }
 
-    .info {
-      text-align: left;
-      padding: 16px;
-      background: #f9f9f9;
-      border-radius: 6px;
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      color: #666;
-      white-space: pre-wrap;
-      word-break: break-all;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-
     .status {
       margin-top: 16px;
       padding: 12px;
@@ -101,13 +87,62 @@
       font-size: 13px;
       color: #999;
     }
+
+    .cookie-box {
+      margin-top: 24px;
+      text-align: left;
+    }
+
+    .cookie-box label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .cookie-display {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #666;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: #333;
+      color: white;
+      font-size: 15px;
+      font-weight: 500;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .btn:hover {
+      background: #555;
+    }
+
+    .btn:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
   </style>
 </head>
-
 <body>
   <div class="container">
-    <h1>二维码登录</h1>
-    <p class="subtitle">使用网易云音乐App扫描二维码登录</p>
+    <h1>获取 Cookie</h1>
+    <p class="subtitle">使用网易云音乐App扫描二维码登录获取 Cookie</p>
 
     <div class="qr-wrapper">
       <img id="qrImg" src="" alt="二维码加载中..." />
@@ -115,20 +150,24 @@
 
     <div id="status" class="status waiting">等待扫描...</div>
 
-    <div id="info" class="info"></div>
+    <div id="cookieBox" class="cookie-box" style="display: none;">
+      <label>您的 Cookie（请复制到 .env 文件）：</label>
+      <div id="cookieDisplay" class="cookie-display"></div>
+      <button id="copyBtn" class="btn" onclick="copyCookie()">复制 Cookie</button>
+    </div>
 
     <p class="hint">请打开网易云音乐App，扫描上方二维码完成登录</p>
   </div>
 
   <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
   <script>
+    let timer
+
     async function login() {
-      let timer
       const statusDiv = document.getElementById('status')
       const cookie = localStorage.getItem('cookie')
 
       updateStatus('加载二维码...', 'waiting')
-      getLoginStatus(cookie)
 
       try {
         const res = await axios({
@@ -154,8 +193,8 @@
           } else if (statusRes.code === 803) {
             clearInterval(timer)
             updateStatus('授权登录成功！', 'success')
-            await getLoginStatus(statusRes.cookie)
             localStorage.setItem('cookie', statusRes.cookie)
+            showCookie(statusRes.cookie)
           }
         }, 3000)
       } catch (error) {
@@ -171,25 +210,33 @@
       return res.data
     }
 
-    async function getLoginStatus(cookie = '') {
-      try {
-        const res = await axios({
-          url: `/login/status?timestamp=${Date.now()}&ua=pc`,
-          method: 'post',
-          data: {
-            cookie,
-          },
-        })
-        document.querySelector('#info').textContent = JSON.stringify(res.data, null, 2)
-      } catch (error) {
-        console.error('获取登录状态失败:', error)
-      }
-    }
-
     function updateStatus(message, type) {
       const statusDiv = document.getElementById('status')
       statusDiv.textContent = message
       statusDiv.className = 'status ' + type
+    }
+
+    function showCookie(cookie) {
+      const cookieBox = document.getElementById('cookieBox')
+      const cookieDisplay = document.getElementById('cookieDisplay')
+      cookieBox.style.display = 'block'
+      cookieDisplay.textContent = cookie
+    }
+
+    async function copyCookie() {
+      const cookieDisplay = document.getElementById('cookieDisplay')
+      const cookie = cookieDisplay.textContent
+      
+      try {
+        await navigator.clipboard.writeText(cookie)
+        const copyBtn = document.getElementById('copyBtn')
+        copyBtn.textContent = '已复制！'
+        setTimeout(() => {
+          copyBtn.textContent = '复制 Cookie'
+        }, 2000)
+      } catch (err) {
+        alert('复制失败，请手动复制')
+      }
     }
 
     login()

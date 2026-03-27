@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>网易云音乐自动打卡</title>
+  <style>
+    :root {
+      --fg: #333;
+      --muted: #666;
+      --border: #ddd;
+      --bg: #f5f5f5;
+      --panel: #ffffff;
+      --accent: #C20C0C;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--fg); background: var(--bg); line-height: 1.6; }
+    .container { max-width: 960px; margin: 40px auto; padding: 0 20px; }
+    @media (max-width: 480px) {
+      .container { margin: 20px auto; padding: 0 16px; }
+      header.site-header h1 { font-size: 22px; }
+      .block { padding: 16px; }
+    }
+    header.site-header { margin-bottom: 24px; }
+    header.site-header h1 { font-size: 28px; font-weight: 600; margin: 0; }
+    .badge { display: inline-block; margin-left: 8px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 12px; font-size: 12px; color: var(--muted); }
+    .sub { margin-top: 8px; color: var(--muted); font-size: 14px; }
+    .block { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
+    .block h2 { margin: 0 0 12px; font-size: 18px; font-weight: 600; }
+    .kvs { display: grid; grid-template-columns: 120px 1fr; gap: 8px 12px; align-items: start; }
+    .kvs div:first-child { color: var(--muted); flex-shrink: 0; }
+    .kvs div:last-child { word-break: break-all; overflow-wrap: anywhere; min-width: 0; overflow: hidden; }
+    @media (max-width: 480px) {
+      .kvs { grid-template-columns: 1fr; gap: 4px 12px; }
+      .kvs div:first-child { font-weight: 500; }
+    }
+    ul.links { list-style: none; padding: 0; margin: 0; }
+    ul.links li { margin: 8px 0; }
+    ul.links a { color: var(--fg); text-decoration: none; border-bottom: 1px dotted var(--border); transition: all 0.2s ease; }
+    ul.links a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+    pre { margin: 0; background: #f9f9f9; border: 1px solid var(--border); border-radius: 6px; padding: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+    code { font-family: 'Courier New', monospace; font-size: 13px; }
+    @media (max-width: 480px) {
+      code { font-size: 12px; }
+    }
+    .status { padding: 8px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; margin-bottom: 12px; }
+    .status.success { background: #d1fae5; color: #065f46; }
+    .status.error { background: #fee2e2; color: #991b1b; }
+    .status.warning { background: #fef3c7; color: #92400e; }
+    .btn { display: inline-block; padding: 8px 16px; background: var(--accent); color: white; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500; border: none; cursor: pointer; transition: background 0.2s ease; }
+    .btn:hover { background: #a00909; }
+    footer.site-footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--muted); text-align: center; }
+    footer.site-footer a { color: var(--fg); text-decoration: none; transition: color 0.2s ease; }
+    footer.site-footer a:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header class="site-header">
+      <h1>网易云音乐自动打卡 <span id="api-version" class="badge"></span></h1>
+      <p class="sub">🎵 自动完成网易云音乐每日签到任务</p>
+    </header>
+
+    <section class="block">
+      <h2>账号状态</h2>
+      <div id="account-status">
+        <div class="status warning">加载中...</div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>一键签到</h2>
+      <p style="margin-bottom: 12px;">点击下方按钮完成所有签到任务（每日签到、黑胶乐签、云贝签到、听歌打卡）</p>
+      <button id="signBtn" class="btn" onclick="handleSign()">立即签到</button>
+      <div id="sign-result" style="margin-top: 16px;"></div>
+    </section>
+
+    <section class="block">
+      <h2>API 接口</h2>
+      <div class="kvs">
+        <div>签到接口</div><div><code>GET /api/sign?key=你的密钥</code></div>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <a href="/login" target="_blank">获取 Cookie</a>
+    </footer>
+  </main>
+
+  <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
+  <script>
+    async function checkAccount() {
+      const statusDiv = document.getElementById('account-status')
+      try {
+        const res = await axios({
+          url: '/user/account',
+          method: 'post'
+        })
+        const data = res.data
+        if (data.code === 200 && data.profile) {
+          statusDiv.innerHTML = `
+            <div class="status success">✓ 已登录</div>
+            <div class="kvs">
+              <div>用户昵称</div><div>${data.profile.nickname}</div>
+              <div>用户ID</div><div>${data.profile.userId}</div>
+              <div>签名</div><div>${data.profile.signature || '无'}</div>
+            </div>
+          `
+        } else {
+          statusDiv.innerHTML = `
+            <div class="status error">✗ 未登录或 Cookie 已过期</div>
+            <p style="margin-top: 12px;">请前往 <a href="/login" target="_blank">获取 Cookie</a> 并更新环境变量。</p>
+          `
+        }
+      } catch (error) {
+        console.error('检查账号状态失败:', error)
+        statusDiv.innerHTML = `
+          <div class="status error">✗ 检查账号状态失败</div>
+          <p style="margin-top: 12px;">错误信息: ${error.response?.data?.message || error.message}</p>
+        `
+      }
+    }
+
+    async function handleSign() {
+      const signBtn = document.getElementById('signBtn')
+      const resultDiv = document.getElementById('sign-result')
+      
+      signBtn.disabled = true
+      signBtn.textContent = '签到中...'
+      resultDiv.innerHTML = '<div class="status warning">正在签到，请稍候...</div>'
+
+      try {
+        const res = await axios({
+          url: '/api/sign',
+          method: 'get',
+          params: {
+            key: prompt('请输入签到密钥（AUTH_KEY）：')
+          }
+        })
+        
+        const data = res.data
+        if (data.success) {
+          resultDiv.innerHTML = `
+            <div class="status success">✓ ${data.message}</div>
+            <pre><code>${JSON.stringify(data.results, null, 2)}</code></pre>
+          `
+        } else {
+          resultDiv.innerHTML = `
+            <div class="status error">✗ ${data.message}</div>
+          `
+        }
+      } catch (error) {
+        console.error('签到失败:', error)
+        const errorMsg = error.response?.data?.message || error.message || '签到失败，请重试'
+        resultDiv.innerHTML = `
+          <div class="status error">✗ 签到失败</div>
+          <p style="margin-top: 8px;">错误信息: ${errorMsg}</p>
+        `
+      } finally {
+        signBtn.disabled = false
+        signBtn.textContent = '立即签到'
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      fetch('/package-version')
+        .then(r => r.json())
+        .then(data => {
+          if (data.version) document.getElementById('api-version').textContent = 'v' + data.version
+        })
+        .catch(() => {})
+      
+      checkAccount()
+    })
+  </script>
+</body>
+</html>

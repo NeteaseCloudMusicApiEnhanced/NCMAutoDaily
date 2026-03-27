@@ -1,0 +1,1 @@
+{"version": 2, "builds": [{"src": "index.js", "use": "@vercel/node"}], "routes": [{"src": "/(.*)", "dest": "index.js"}], "env": {"NETEASE_COOKIE": "@netease_cookie", "AUTH_KEY": "@auth_key", "PLAYLIST_ID": "@playlist_id", "PORT": "3000"}}
