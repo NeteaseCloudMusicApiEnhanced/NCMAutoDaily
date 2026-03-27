@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>获取 Cookie - 网易云音乐自动打卡</title>
+  <title>获取 Cookie - 网易云音乐自助打卡</title>
   <style>
     * {
       margin: 0;
@@ -224,7 +224,7 @@
       // 提取 MUSIC_U 的值（不包含尾部的 ;）
       const match = cookie.match(/MUSIC_U=([^;]+)/)
       const musicUValue = match ? match[1] : cookie
-      cookieDisplay.textContent = `MUSIC_U=${musicUValue}`
+      cookieDisplay.textContent = `MUSIC_U=${musicUValue};`
     }
 
     async function copyCookie() {
