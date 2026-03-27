@@ -220,7 +220,11 @@
       const cookieBox = document.getElementById('cookieBox')
       const cookieDisplay = document.getElementById('cookieDisplay')
       cookieBox.style.display = 'block'
-      cookieDisplay.textContent = cookie
+      
+      // 提取 MUSIC_U 的值（不包含尾部的 ;）
+      const match = cookie.match(/MUSIC_U=([^;]+)/)
+      const musicUValue = match ? match[1] : cookie
+      cookieDisplay.textContent = `MUSIC_U=${musicUValue}`
     }
 
     async function copyCookie() {

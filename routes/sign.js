@@ -1,6 +1,8 @@
 const express = require('express')
 const router = express.Router()
-const { daily_signin, vip_sign, scrobble, yunbei_sign, playlist_detail, user_account } = require('@neteasecloudmusicapienhanced/api')
+const axios = require('axios')
+
+const API_BASE_URL = process.env.API_BASE_URL || 'https://interface.163.focalors.ltd'
 
 router.get('/', async (req, res) => {
   try {
@@ -26,28 +28,48 @@ router.get('/', async (req, res) => {
     }
 
     try {
-      results.account = await user_account({ cookie })
+      const response = await axios({
+        url: `${API_BASE_URL}/user/account`,
+        method: 'post',
+        data: { cookie }
+      })
+      results.account = response.data
     } catch (error) {
       console.error('获取账号信息失败:', error.message)
       results.account = { error: error.message }
     }
 
     try {
-      results.daily_signin = await daily_signin({ type: 0, cookie })
+      const response = await axios({
+        url: `${API_BASE_URL}/daily_signin`,
+        method: 'post',
+        data: { type: 1, cookie }
+      })
+      results.daily_signin = response.data
     } catch (error) {
       console.error('每日签到失败:', error.message)
       results.daily_signin = { error: error.message }
     }
 
     try {
-      results.vip_sign = await vip_sign({ cookie })
+      const response = await axios({
+        url: `${API_BASE_URL}/vip/sign`,
+        method: 'post',
+        data: { cookie }
+      })
+      results.vip_sign = response.data
     } catch (error) {
       console.error('黑胶乐签失败:', error.message)
       results.vip_sign = { error: error.message }
     }
 
     try {
-      results.yunbei_sign = await yunbei_sign({ cookie })
+      const response = await axios({
+        url: `${API_BASE_URL}/yunbei/sign`,
+        method: 'post',
+        data: { cookie }
+      })
+      results.yunbei_sign = response.data
     } catch (error) {
       console.error('云贝签到失败:', error.message)
       results.yunbei_sign = { error: error.message }
@@ -55,16 +77,24 @@ router.get('/', async (req, res) => {
 
     if (playlistId) {
       try {
-        const playlistRes = await playlist_detail({ id: playlistId, cookie })
-        const trackIds = playlistRes.body.playlist.trackIds.slice(0, 5).map(t => t.id)
+        const response = await axios({
+          url: `${API_BASE_URL}/playlist/detail`,
+          method: 'get',
+          params: { id: playlistId, cookie }
+        })
+        const trackIds = response.data.playlist.trackIds.slice(0, 5).map(t => t.id)
         
         for (const trackId of trackIds) {
           try {
-            await scrobble({
-              id: trackId,
-              sourceid: playlistId,
-              time: 30,
-              cookie
+            await axios({
+              url: `${API_BASE_URL}/scrobble`,
+              method: 'post',
+              data: {
+                id: trackId,
+                sourceid: playlistId,
+                time: 30,
+                cookie
+              }
             })
           } catch (error) {
             console.error(`听歌打卡失败 (歌曲ID: ${trackId}):`, error.message)
