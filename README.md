@@ -19,8 +19,8 @@
 - `AUTH_KEY`：任意密码。
 - `PLAYLIST_ID`：可选，听歌打卡的歌单 ID。
 - `API_BASE_URL`：必填，访问接口的基础 URL, 需要部署[NeteaseCloudMusicApiEnhanced](https://github.com/neteasecloudmusicapienhanced/api-enhanced)。
-4. 部署项目, 添加域名到 Vercel 项目中。访问 `https://your-domain.com/daily?key=你在环境变量配置的密码` 可以触发打卡。
-5. 登录[cron-job.org](https://cron-job.org/)或其他定时任务服务，设置每天访问 `https://your-domain.com/daily?key=你在环境变量配置的密码` 来实现自动打卡。
+4. 部署项目, 添加域名到 Vercel 项目中。访问 `https://your-domain.com/api/sign?key=你在环境变量配置的密码` 可以触发打卡。
+5. 登录[cron-job.org](https://cron-job.org/)或其他定时任务服务，设置每天访问 `https://your-domain.com/api/sign?key=你在环境变量配置的密码` 来实现自动打卡。
 
 ## 许可证
 
