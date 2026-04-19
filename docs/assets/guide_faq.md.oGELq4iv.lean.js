@@ -1,0 +1,1 @@
+import{_ as a,o as i,c as e,ag as n}from"./chunks/framework.DXGyWiRo.js";const k=JSON.parse('{"title":"常见问题","description":"","frontmatter":{},"headers":[],"relativePath":"guide/faq.md","filePath":"guide/faq.md"}'),l={name:"guide/faq.md"};function t(p,s,r,h,o,d){return i(),e("div",null,[...s[0]||(s[0]=[n("",14)])])}const u=a(l,[["render",t]]);export{k as __pageData,u as default};

@@ -84,7 +84,7 @@ router.get('/', async (req, res) => {
           method: 'get',
           params: { id: playlistId, cookie }
         })
-        const trackIds = response.data.playlist.trackIds.slice(0, 5).map(t => t.id)
+        const trackIds = response.data.playlist.trackIds.slice(0, 100).map(t => t.id)
         
         for (const trackId of trackIds) {
           try {
@@ -94,7 +94,7 @@ router.get('/', async (req, res) => {
               data: {
                 id: trackId,
                 sourceid: playlistId,
-                time: 30,
+                time: 300,
                 cookie
               }
             })
