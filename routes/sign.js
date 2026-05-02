@@ -94,7 +94,7 @@ router.get('/', async (req, res) => {
               data: {
                 id: trackId,
                 sourceid: playlistId,
-                time: 300,
+                time: 61,
                 cookie
               }
             })
