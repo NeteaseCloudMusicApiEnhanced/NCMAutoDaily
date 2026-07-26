@@ -114,25 +114,38 @@ async function signOneAccount(account) {
         method: 'get',
         params: { id: playlistId, cookie }
       })
-      const trackIds = response.data.playlist.trackIds.slice(0, 100).map(t => t.id)
+      // 优先用 tracks（含歌曲详情），fallback 到 trackIds
+      const songs = response.data.playlist.tracks || response.data.playlist.trackIds
+      const scrobbleList = songs.slice(0, 30)
+      let scrobbleSuccess = 0
 
-      for (const trackId of trackIds) {
+      for (const song of scrobbleList) {
         try {
+          // /scrobble/v1 — 听歌打卡 V2 (NCBL 加密版)
+          // 必填: id, time  可选: sourceid, source, name, artist, total
+          const params = {
+            id: song.id,
+            sourceid: playlistId,
+            time: 61,
+            cookie
+          }
+          // tracks 有完整信息，附带 name 和 total 提高成功率
+          if (song.name) {
+            params.name = song.name
+            params.total = Math.floor((song.dt || 0) / 1000) // 总时长(秒)
+          }
+
           await axios({
-            url: `${API_BASE_URL}/scrobble`,
-            method: 'post',
-            data: {
-              id: trackId,
-              sourceid: playlistId,
-              time: 61,
-              cookie
-            }
+            url: `${API_BASE_URL}/scrobble/v1`,
+            method: 'get',
+            params
           })
+          scrobbleSuccess++
         } catch (error) {
-          console.error(`[${name}] 听歌打卡失败 (歌曲ID: ${trackId}):`, error.message)
+          console.error(`[${name}] 听歌打卡失败 (歌曲ID: ${song.id}):`, error.message)
         }
       }
-      results.scrobble = { success: true, count: trackIds.length }
+      results.scrobble = { success: true, count: scrobbleSuccess }
     } catch (error) {
       console.error(`[${name}] 听歌打卡失败:`, error.message)
       results.scrobble = { error: error.message }
