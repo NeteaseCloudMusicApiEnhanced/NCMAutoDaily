@@ -67,18 +67,18 @@ async function signOneAccount(account) {
     results.account = { error: error.message }
   }
 
-  // 2. 每日签到
-  try {
-    const response = await axios({
-      url: `${API_BASE_URL}/daily_signin`,
-      method: 'post',
-      data: { type: 1, cookie }
-    })
-    results.daily_signin = response.data
-  } catch (error) {
-    console.error(`[${name}] 每日签到失败:`, error.message)
-    results.daily_signin = { error: error.message }
-  }
+  // // 2. 每日签到
+  // try {
+  //   const response = await axios({
+  //     url: `${API_BASE_URL}/daily_signin`,
+  //     method: 'post',
+  //     data: { type: 1, cookie }
+  //   })
+  //   results.daily_signin = response.data
+  // } catch (error) {
+  //   console.error(`[${name}] 每日签到失败:`, error.message)
+  //   results.daily_signin = { error: error.message }
+  // }
 
   // 3. 黑胶乐签
   try {
