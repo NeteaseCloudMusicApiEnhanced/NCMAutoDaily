@@ -80,6 +80,15 @@
     .task-tag.success { background: #d1fae5; color: #065f46; }
     .task-tag.error { background: #fee2e2; color: #991b1b; }
     .task-tag.skipped { background: #fef3c7; color: #92400e; }
+
+    /* 单独功能面板 */
+    .single-row { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+    .single-row label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+    .single-row input, .single-row select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; font-family: inherit; background: #fff; }
+    .single-btn { display: inline-block; padding: 8px 14px; background: #fff; color: var(--fg); border: 1px solid var(--border); border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; margin-right: 8px; margin-bottom: 8px; }
+    .single-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .single-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .single-result-item { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -104,9 +113,36 @@
     </section>
 
     <section class="block">
+      <h2>单独功能</h2>
+      <p style="margin-bottom: 12px;">按需单独执行某个任务，不跑完整签到（所有接口均需密钥）</p>
+      <div class="single-row">
+        <div>
+          <label for="single-index">账号索引（留空 = 全部账号）</label>
+          <input type="number" id="single-index" placeholder="如 1" min="1" style="width:140px;">
+        </div>
+        <div>
+          <button id="single-run" class="btn" style="background:#fff;color:var(--accent);border:1px solid var(--accent);" onclick="runSingle()">执 行</button>
+        </div>
+      </div>
+      <div class="single-row" style="margin-top:4px;">
+        <button class="single-btn" onclick="runSingle('account-info')">🪪 获取账号信息</button>
+        <button class="single-btn" onclick="runSingle('vip-sign')">💿 黑胶乐签</button>
+        <button class="single-btn" onclick="runSingle('yunbei-sign')">🎁 云贝签到</button>
+        <button class="single-btn" onclick="runSingle('scrobble')">🎧 听歌打卡</button>
+        <button class="single-btn" onclick="runSingle('free-listen')">⏱️ 免费听刷取</button>
+      </div>
+      <div id="single-result" style="margin-top:8px;"></div>
+    </section>
+
+    <section class="block">
       <h2>API 接口</h2>
       <div class="kvs">
-        <div>签到接口</div><div><code>GET /api/sign?key=你的密钥</code></div>
+        <div>一键签到</div><div><code>GET /api/sign?key=你的密钥</code></div>
+        <div>获取账号信息</div><div><code>GET /api/account-info?key=xxx[&amp;index=N]</code></div>
+        <div>黑胶乐签</div><div><code>GET /api/vip-sign?key=xxx[&amp;index=N]</code></div>
+        <div>云贝签到</div><div><code>GET /api/yunbei-sign?key=xxx[&amp;index=N]</code></div>
+        <div>听歌打卡</div><div><code>GET /api/scrobble?key=xxx[&amp;index=N]</code></div>
+        <div>免费听刷取</div><div><code>GET /api/free-listen?key=xxx[&amp;index=N]</code></div>
       </div>
     </section>
 
@@ -255,6 +291,101 @@
       } finally {
         signBtn.disabled = false
         signBtn.textContent = '立即签到'
+      }
+    }
+
+    // 单独功能 - 执行单个任务
+    const SINGLE_TASKS = {
+      'account-info': '获取账号信息',
+      'vip-sign': '黑胶乐签',
+      'yunbei-sign': '云贝签到',
+      'scrobble': '听歌打卡',
+      'free-listen': '免费听刷取'
+    }
+
+    function renderSingleResults(results) {
+      const names = Object.keys(results)
+      if (names.length === 0) return '<div class="status warning">无结果</div>'
+
+      let html = ''
+      Object.entries(results).forEach(([name, r]) => {
+        if (r.error) {
+          html += `<div class="single-result-item"><span style="color:var(--error);">✗</span><strong>${name}</strong><span style="color:var(--error);font-size:13px;">${r.error}</span></div>`
+          return
+        }
+        // 免费听刷取结果
+        if (r.targetMinutes !== undefined) {
+          const status = r.reached ? '已完成' : (r.successCount ? '部分' : '未进行')
+          const color = r.reached ? 'var(--success)' : 'var(--warning)'
+          html += `
+            <div class="single-result-item">
+              <span style="color:${color};">●</span><strong>${name}</strong>
+              <span style="font-size:13px;color:var(--muted);">
+                免费听 ${r.gainedMinutes} / ${r.targetMinutes} 分钟（成功 ${r.successCount} 次 / 失败 ${r.failCount} 次）· ${status}
+              </span>
+            </div>`
+          return
+        }
+        // 听歌打卡结果
+        if (r.success !== undefined || r.skipped !== undefined || r.count !== undefined) {
+          if (r.skipped) {
+            html += `<div class="single-result-item"><span style="color:var(--warning);">—</span><strong>${name}</strong><span style="font-size:13px;color:var(--muted);">${r.reason || '已跳过'}</span></div>`
+          } else {
+            html += `<div class="single-result-item"><span style="color:var(--success);">✓</span><strong>${name}</strong><span style="font-size:13px;color:var(--muted);">听歌打卡 ${r.count || 0} 首</span></div>`
+          }
+          return
+        }
+        // 普通接口结果（黑胶乐签 / 云贝签到 / 账号信息）
+        const codeOk = r.code !== undefined ? (r.code === 200 ? '成功' : `code=${r.code}`) : '成功'
+        const color = r.code === 200 || r.code === undefined ? 'var(--success)' : 'var(--error)'
+        html += `<div class="single-result-item"><span style="color:${color};">✓</span><strong>${name}</strong><span style="font-size:13px;color:var(--muted);">${codeOk}</span></div>`
+      })
+      return html
+    }
+
+    // 单独执行某任务；不传 taskKey 时从下拉/输入框读取
+    async function runSingle(taskKey) {
+      const btn = taskKey ? document.querySelector(`[onclick^="runSingle('${taskKey}'"]`) : document.getElementById('single-run')
+      if (!btn) return
+      const original = btn.textContent
+      btn.disabled = true
+      btn.textContent = '执行中...'
+      const resultDiv = document.getElementById('single-result')
+
+      try {
+        const authKey = prompt('请输入密钥（AUTH_KEY）：')
+        if (!authKey) {
+          btn.disabled = false
+          btn.textContent = original
+          return
+        }
+
+        const key = taskKey || document.querySelector('.single-btn:not([onclick])')?.dataset.task
+        // 兜底：没点具体按钮时用默认任务
+        const finalTask = taskKey || key || 'vip-sign'
+        const index = document.getElementById('single-index').value.trim()
+
+        const params = { key: authKey }
+        if (index) params.index = index
+
+        const label = SINGLE_TASKS[finalTask] || finalTask
+        resultDiv.innerHTML = `<div class="status warning">正在执行「${label}」...</div>`
+        const res = await axios.get(`/api/${finalTask}`, { params })
+
+        if (res.data.success) {
+          resultDiv.innerHTML = `
+            <div class="status success">✓ ${res.data.message}</div>
+            <div style="margin-top:12px;">${renderSingleResults(res.data.results)}</div>
+          `
+        } else {
+          resultDiv.innerHTML = `<div class="status error">✗ ${res.data.message}</div>`
+        }
+      } catch (error) {
+        const errorMsg = error.response?.data?.message || error.message || '执行失败，请重试'
+        resultDiv.innerHTML = `<div class="status error">✗ 执行失败</div><p style="margin-top:8px;font-size:13px;color:var(--muted);">${errorMsg}</p>`
+      } finally {
+        btn.disabled = false
+        btn.textContent = original
       }
     }
 

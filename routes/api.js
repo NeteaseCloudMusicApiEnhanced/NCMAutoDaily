@@ -1,32 +1,9 @@
 const express = require('express')
 const router = express.Router()
 const axios = require('axios')
+const { getAccounts } = require('../lib/helpers')
 
 const API_BASE_URL = process.env.API_BASE_URL || 'https://interface.163.focalors.ltd'
-
-/**
- * 获取所有账号配置（与 sign.js 保持一致）
- */
-function getAccounts() {
-  const accounts = []
-  let i = 1
-  while (process.env[`NETEASE_COOKIE_${i}`]) {
-    accounts.push({
-      index: i,
-      cookie: process.env[`NETEASE_COOKIE_${i}`],
-      playlistId: process.env[`PLAYLIST_ID_${i}`] || null
-    })
-    i++
-  }
-  if (accounts.length === 0 && process.env.NETEASE_COOKIE) {
-    accounts.push({
-      index: 1,
-      cookie: process.env.NETEASE_COOKIE,
-      playlistId: process.env.PLAYLIST_ID || null
-    })
-  }
-  return accounts
-}
 
 // 检查配置状态（支持多账号）
 router.get('/config/status', (req, res) => {
